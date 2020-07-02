@@ -1,0 +1,131 @@
+#!/Users/saumyasinghal/dev/miniconda3/envs/gibgi/bin/python
+#None means unexplored - gray
+#True means red
+#False means white
+
+import random
+
+import click
+from termcolor import colored
+
+from objects import board
+# from termcolor import colored,cprint
+from utilities import placeShip, randomizeShips, joinBoards
+
+
+def parseInput(inp): #works
+    if len(inp) != 2:
+        return False
+    l = list(inp.lower())
+    row = -1
+    column = -1
+    for char in l:
+        if char in 'abcdefghij':
+            row = 'abcdefghij'.index(char)
+        elif str.isdigit(char):
+            column = int(char)
+    if row==-1 or column==-1:
+        print(l,row,column)
+        return False
+    return row,column
+
+
+def pTurn(play_board,comp_board,pH):
+    #handle player turns
+    print("Your turn:")
+    click.echo(joinBoards(comp_board,play_board))
+    inp = input("Coordinate:")
+    click.clear()
+    if inp=="stop":
+        quit()
+    parsed = parseInput(inp)
+    while not parsed or parsed in pH:
+        click.echo(joinBoards(comp_board, play_board))
+        if parsed:
+            inp = input("You've already hit that coordinate:")
+        else:
+            inp = input("Sorry, didn't understand that:")
+        parsed = parseInput(inp)
+    startedSunk= comp_board.numSunk
+    comp_board.hit(parsed[0],parsed[1])
+    comp_board.updateSunk()
+    pH.append(parsed)
+    click.clear()
+    #click.echo(str(comp_board.numSunk)+str(play_board.numSunk))
+    if comp_board.numSunk > startedSunk:
+        click.echo(colored("You sunk my battleship!", "green",attrs=["bold","underline"]))
+    elif comp_board.hasShip(parsed[0],parsed[1]):
+        click.echo(colored("You hit my battleship!","green"))
+    else:
+        click.echo()
+
+    pass
+
+def cTurn(cB,pB,cH):
+    ## TODO
+    # make computer react on third turn if scored two adjacent: be able to finish a whole ship.
+    # if len(cH)>0 and pB.hasShip(cH[-1][0],cH[-1][1]) and not cH[-1][2]: #if we hit last time
+    #     row,col = genHit(pB,cH)
+    # elif len(cH)>1 and pB.hasShip(cH[-2][0],cH[-2][1]) and not cH[-2][2]:
+    #     row, col = genHit(pB,cH[:-1])
+    # elif len(cH)>2 and pB.hasShip(cH[-3][0],cH[-3][1]) and not cH[-3][2]:
+    #     row, col = genHit(pB,cH[:-2])
+    # elif len(cH)>3 and pB.hasShip(cH[-4][0],cH[-4][1]) and not cH[-4][2]:
+    #     row, col = genHit(pB,cH[:-3])
+    # elif len(cH)>4 and pB.hasShip(cH[-5][0],cH[-1][1]) and not cH[-5][2]:
+    #     row, col = genHit(pB,cH[:-5])
+    # else:
+    if True:
+        row = random.randint(0, 9)
+        col = random.randint(0, 9)
+        while [ row,col,True] in cH or [ row,col,False] in cH:
+            row = random.randint(0,9)
+            col = random.randint(0,9)
+    # if (row, col) ==(-1,-1):
+    #     row = random.randint(0, 9)
+    #     col = random.randint(0, 9)
+    #     while [row, col] in cH:
+    #         row = random.randint(0, 9)
+    #         col = random.randint(0, 9)
+
+    startedSunk = pB.numSunk
+    pB.hit(row,col)
+    click.echo("My turn:" + "ABCDEFGHIJK"[row]+ str(col))
+    #click.echo(joinBoards(cB,pB))
+    pB.updateSunk()
+    cH.append([row, col,pB.numSunk > startedSunk])
+    if pB.numSunk > startedSunk:
+        click.echo(colored("I sunk your battleship!", "red",attrs=["bold","underline"]))
+    elif pB.hasShip(row,col):
+        click.echo(colored("I hit your battleship!","red"))
+    else:
+        click.echo()
+
+
+def setup(pB,cB):
+    placeShip(pB, "destroyer", 2, 2)
+    placeShip(pB, "submarine", 3, 5)
+    placeShip(pB, "cruiser", 3, 8)
+    placeShip(pB, "battleship", 4, 12)
+    placeShip(pB, "carrier", 5, 17)
+    randomizeShips(cB)
+    cB.hideShips = True
+    click.clear()
+
+def play():
+    cBoard = board(10, 10)
+    pBoard = board(10, 10)
+    cHits = []
+    pHits = []
+    setup(pBoard,cBoard)
+    while cBoard.numSunk!=5 and pBoard.numSunk!=5:
+        pTurn(pBoard,cBoard,pHits)
+        cTurn(cBoard,pBoard,cHits)
+    if cBoard.numSunk == 5:
+        click.echo(colored("You won!","grey","on_green"))
+    else:
+        click.echo(colored("You lost!","grey","on_red"))
+    cBoard.hideShips = False
+    click.echo(joinBoards(cBoard,pBoard))
+
+play()
