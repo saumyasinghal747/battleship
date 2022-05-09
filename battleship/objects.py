@@ -1,5 +1,5 @@
+# coding=utf-8
 from termcolor import colored
-
 
 #None means unexplored - gray
 #True means red
